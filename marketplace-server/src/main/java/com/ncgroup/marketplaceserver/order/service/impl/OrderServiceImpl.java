@@ -79,34 +79,37 @@ public class OrderServiceImpl implements OrderService {
         log.info("Add time: " + orderDto.getDeliveryTime());
         Order order = OrderPostDto.toOrder(orderDto);
         if (token != null) {
-            String email = getTokenEmail(token); //user email
-            order.getUser().setId(userService.findUserByEmail(email).getId());
+            order.getUser().setId(userService.findUserByToken(token).getId());
         } else {
             long userId = userService.addUserWithoutCredentials(
                     order.getUser().getName(), order.getUser().getSurname(), order.getUser().getPhone()).getId();
             order.getUser().setId(userId);
         }
+        order.setCourier(findCourier(orderDto.getDeliveryTime()));
+        order = orderRepo.saveOrderDetails(order);
+        updateOrderItemsQuantity(order);
+        return OrderReadDto.convertToDto(order);
+    }
 
+    private Courier findCourier(OffsetDateTime deliveryTime) {
         long courierId = -1;
         try {
-            courierId = orderRepo.getFreeCourierId(orderDto.getDeliveryTime());
+            courierId = orderRepo.getFreeCourierId(deliveryTime);
         } catch (Exception e) {
             throw new NoCouriersException("Sorry, there are no available couriers for that time");
         }
+        return Courier
+                .builder()
+                .user(
+                        User
+                                .builder()
+                                .id(courierId)
+                                .build()
+                )
+                .build();
+    }
 
-        order.setCourier(
-                Courier
-                        .builder()
-                        .user(
-                                User
-                                        .builder()
-                                        .id(courierId)
-                                        .build()
-                        )
-                        .build()
-        );
-
-        order = orderRepo.saveOrderDetails(order);
+    private void updateOrderItemsQuantity(Order order) {
         for (OrderItem item : order.getItems()) {
             try {
                 double oldQunatity = goodService.find(item.getGood().getId()).getQuantity();
@@ -117,7 +120,6 @@ public class OrderServiceImpl implements OrderService {
             item.setPrice(calculateSum(item.getGood().getId(), item.getQuantity()));
             orderRepo.saveOrderGood(item, order.getId());
         }
-        return OrderReadDto.convertToDto(order);
     }
 
     @Override

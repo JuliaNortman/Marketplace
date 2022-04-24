@@ -73,9 +73,9 @@ public class OrderController {
             @RequestHeader(value = "Authorization", required = false) String token) {
         UserDisplayInfoDto userInfo = orderService.getUserInfoForOrder(token);
         if (userInfo == null) {
-            return new ResponseEntity<UserDisplayInfoDto>(HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
-        return new ResponseEntity<UserDisplayInfoDto>(userInfo, HttpStatus.OK);
+        return new ResponseEntity<>(userInfo, HttpStatus.OK);
 
     }
 
@@ -83,9 +83,9 @@ public class OrderController {
     public ResponseEntity<UserDisplayInfoDto> getCourierInfoForOrder(@PathVariable("id") long orderId) {
         UserDisplayInfoDto courierInfo = orderService.getCourierInfoForOrder(orderId);
         if (courierInfo == null) {
-            return new ResponseEntity<UserDisplayInfoDto>(HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
-        return new ResponseEntity<UserDisplayInfoDto>(courierInfo, HttpStatus.OK);
+        return new ResponseEntity<>(courierInfo, HttpStatus.OK);
     }
 
     @PostMapping
