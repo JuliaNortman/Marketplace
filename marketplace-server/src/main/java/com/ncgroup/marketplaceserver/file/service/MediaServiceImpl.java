@@ -42,11 +42,8 @@ public class MediaServiceImpl implements MediaService {
             throw new UnsupportedContentTypeException("File uploaded is not an image", allowedTypes, create(file.getContentType()));
         }
         String filepath = String.format("tmp/%s_%s", UUID.randomUUID(), file.getOriginalFilename());
-        Map<String, String> metadata = new HashMap<>();
-        metadata.put("Content-Type", file.getContentType());
-        metadata.put("Content-Length", String.valueOf(file.getSize()));
         try {
-            cloudStorage.upload(filepath, file.getInputStream(), metadata);
+            cloudStorage.upload(filepath, file.getInputStream(), getMetadata(file));
         } catch (IOException e) {
             throw new IllegalStateException("Failed to get input stream", e);
         }
@@ -73,5 +70,12 @@ public class MediaServiceImpl implements MediaService {
     @Override
     public CloudStorage getCloudStorage() {
         return this.cloudStorage;
+    }
+
+    private Map<String, String> getMetadata(MultipartFile file) {
+        Map<String, String> metadata = new HashMap<>();
+        metadata.put("Content-Type", file.getContentType());
+        metadata.put("Content-Length", String.valueOf(file.getSize()));
+        return metadata;
     }
 }
