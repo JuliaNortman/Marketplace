@@ -144,7 +144,7 @@ public class GoodsRepoImpl implements GoodsRepository {
         Long categoryId = createCategory(goodDto.getCategoryName());
         Long productId = createProduct(goodDto.getGoodName(), categoryId);
 
-        /**
+        /*
          * goods are equal if their firm,
          * product and shipping date are equal
          */
@@ -153,18 +153,7 @@ public class GoodsRepoImpl implements GoodsRepository {
         if (!goodId.isPresent()) {
             KeyHolder keyHolder = new GeneratedKeyHolder();
 
-            SqlParameterSource goodParameters = new MapSqlParameterSource()
-                    .addValue("goodQuantity", goodDto.getQuantity())
-                    .addValue("goodPrice", goodDto.getPrice())
-                    .addValue("goodDiscount", goodDto.getDiscount())
-                    .addValue("goodInStock", goodDto.isInStock())
-                    .addValue("goodDescription", goodDto.getDescription())
-                    .addValue("image", goodDto.getImage())
-                    .addValue("unit", goodDto.getUnit().toString())
-                    .addValue("productId", productId)
-                    .addValue("firmId", firmId)
-                    .addValue("status", goodDto.isStatus())
-                    .addValue("date", goodDto.getShippingDate());
+            SqlParameterSource goodParameters = constructSqlParameters(goodDto, firmId, productId, null);
             namedParameterJdbcTemplate.update(insertGoodNewId, goodParameters, keyHolder);
             return keyHolder.getKey().longValue();
         } else if (!getStatus(goodId.get())) {
@@ -175,19 +164,7 @@ public class GoodsRepoImpl implements GoodsRepository {
                     .addValue("id", oldId);
             namedParameterJdbcTemplate.update(deleteGoodOldId, goodParameters);
 
-            goodParameters = new MapSqlParameterSource()
-                    .addValue("id", oldId)
-                    .addValue("goodQuantity", goodDto.getQuantity())
-                    .addValue("goodPrice", goodDto.getPrice())
-                    .addValue("goodDiscount", goodDto.getDiscount())
-                    .addValue("goodInStock", goodDto.isInStock())
-                    .addValue("goodDescription", goodDto.getDescription())
-                    .addValue("image", goodDto.getImage())
-                    .addValue("unit", goodDto.getUnit().toString())
-                    .addValue("productId", productId)
-                    .addValue("firmId", firmId)
-                    .addValue("status", goodDto.isStatus())
-                    .addValue("date", goodDto.getShippingDate());
+            goodParameters = constructSqlParameters(goodDto, firmId, productId, oldId);
             namedParameterJdbcTemplate.update(insertGoodOldId, goodParameters);
             return oldId;
         }
@@ -222,21 +199,7 @@ public class GoodsRepoImpl implements GoodsRepository {
                 .addValue("categoryId", categoryId)
                 .addValue("id", productId);
         namedParameterJdbcTemplate.update(editProductCategory, categoryParameters);
-
-        SqlParameterSource parameters = new MapSqlParameterSource()
-                .addValue("id", id) // for search purpose
-                .addValue("prodId", productId)
-                .addValue("firmId", firmId)
-                .addValue("quantity", goodDto.getQuantity())
-                .addValue("price", goodDto.getPrice())
-                .addValue("discount", goodDto.getDiscount())
-                .addValue("inStock", goodDto.isInStock())
-                .addValue("image", goodDto.getImage())
-                .addValue("unit", goodDto.getUnit().toString())
-                .addValue("description", goodDto.getDescription())
-                .addValue("status", goodDto.isStatus())
-                .addValue("date", goodDto.getShippingDate());
-        namedParameterJdbcTemplate.update(updateProduct, parameters);
+        namedParameterJdbcTemplate.update(updateProduct, constructSqlParameters(goodDto, firmId, productId, id));
     }
 
     @Value("${good.find-by-id}")
@@ -401,5 +364,24 @@ public class GoodsRepoImpl implements GoodsRepository {
                 .addValue("quantity", quantity)
                 .addValue("inStock", inStock);
         namedParameterJdbcTemplate.update(editProductQuantity, parameters);
+    }
+
+    private SqlParameterSource constructSqlParameters(GoodDto goodDto, Long firmId, Long productId, Long oldId) {
+        MapSqlParameterSource source = new MapSqlParameterSource()
+                .addValue("goodQuantity", goodDto.getQuantity())
+                .addValue("goodPrice", goodDto.getPrice())
+                .addValue("goodDiscount", goodDto.getDiscount())
+                .addValue("goodInStock", goodDto.isInStock())
+                .addValue("goodDescription", goodDto.getDescription())
+                .addValue("image", goodDto.getImage())
+                .addValue("unit", goodDto.getUnit().toString())
+                .addValue("productId", productId)
+                .addValue("firmId", firmId)
+                .addValue("status", goodDto.isStatus())
+                .addValue("date", goodDto.getShippingDate());
+        if(oldId != null) {
+            source.addValue("id", oldId);
+        }
+        return source;
     }
 }
