@@ -3,14 +3,12 @@ package com.ncgroup.marketplaceserver.goods.service;
 import com.ncgroup.marketplaceserver.exception.basic.NotFoundException;
 import com.ncgroup.marketplaceserver.file.service.MediaService;
 import com.ncgroup.marketplaceserver.goods.exceptions.GoodAlreadyExistsException;
-import com.ncgroup.marketplaceserver.goods.model.Good;
-import com.ncgroup.marketplaceserver.goods.model.GoodDto;
-import com.ncgroup.marketplaceserver.goods.model.ModelView;
-import com.ncgroup.marketplaceserver.goods.model.RequestParams;
+import com.ncgroup.marketplaceserver.goods.model.*;
 import com.ncgroup.marketplaceserver.goods.repository.GoodsRepository;
 
 import lombok.extern.slf4j.Slf4j;
 
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -18,6 +16,7 @@ import org.springframework.context.annotation.PropertySource;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -78,78 +77,31 @@ public class GoodsServiceImpl implements GoodsService {
                 new NotFoundException("Product with " + id + " not found."));
     }
 
+    private final String FROM_QUERY = "FROM goods INNER JOIN product ON goods.prod_id = product.id " +
+            "INNER JOIN firm ON goods.firm_id = firm.id " +
+            "INNER JOIN category ON category.id = product.category_id";
+
+    private final String SELECT_QUERY = "SELECT goods.id, product.name AS product_name, status, shipping_date, " +
+            "firm.name AS firm_name, category.name AS category_name, unit, " +
+            "goods.quantity, goods.price, goods.discount, goods.in_stock, " +
+            "goods.description, goods.image";
+
+
     @Override
     public ModelView display(RequestParams params) throws NotFoundException {
-
-        List<String> conditions = new ArrayList<>();
-
         StringJoiner fromQuery = new StringJoiner(" ");
-        fromQuery.add(
-                "FROM goods INNER JOIN product ON goods.prod_id = product.id " +
-                        "INNER JOIN firm ON goods.firm_id = firm.id " +
-                        "INNER JOIN category ON category.id = product.category_id");
+        fromQuery.add(FROM_QUERY);
 
-        log.info(fromQuery.toString());
-
-        if (params.getName() != null) {
-            conditions.add("UPPER(product.name) LIKE UPPER(:name)");
+        String condition = displayQueryConditions(params);
+        if(StringUtils.isNotBlank(condition)) {
+            fromQuery.add("WHERE").add(condition);
         }
-
-        if (params.getCategory() != null && !params.getCategory().equals("all")) {
-            conditions.add("category.name = :category");
-        }
-
-        if (params.getMinPrice() != null) {
-            conditions.add("price - price*discount/100 >= :minPrice");
-        }
-
-        if (params.getMaxPrice() != null) {
-            conditions.add("price - price*discount/100 <= :maxPrice");
-        }
-
-        StringJoiner whereStatement = new StringJoiner(" AND ");
-
-        if (!conditions.isEmpty()) {
-            fromQuery.add("WHERE");
-            for (String condition : conditions) {
-                whereStatement.add(condition);
-            }
-        }
-
-        log.info(whereStatement.toString());
-        fromQuery.merge(whereStatement);
-        fromQuery.add("AND status = true");
-
         int numOfGoods = repository
                 .countGoods("SELECT COUNT(*) " + fromQuery, params);
-
-        if (params.getSort() != null) {
-            switch (params.getSort()) {
-                case PRICE:
-                    fromQuery.add("ORDER BY goods.price");
-                    break;
-                case DATE:
-                    fromQuery.add("ORDER BY shipping_date");
-                    break;
-                default:
-                    fromQuery.add("ORDER BY product.name");
-            }
-        } else {
-            fromQuery.add("ORDER BY product.name");
-        }
-
-        if (params.getDirection() != null && params.getDirection().equals("ASC")) {
-            fromQuery.add("ASC");
-        } else {
-            fromQuery.add("DESC");
-        }
-
+        fromQuery.add(getSortOrder(params));
+        log.info(fromQuery.toString());
         StringJoiner flexibleQuery = new StringJoiner(" ");
-        flexibleQuery.add(
-                "SELECT goods.id, product.name AS product_name, status, shipping_date, " +
-                        "firm.name AS firm_name, category.name AS category_name, unit, " +
-                        "goods.quantity, goods.price, goods.discount, goods.in_stock, " +
-                        "goods.description, goods.image");
+        flexibleQuery.add(SELECT_QUERY);
         flexibleQuery.merge(fromQuery);
 
         int numOfPages = numOfGoods % PAGE_CAPACITY == 0 ?
@@ -162,19 +114,15 @@ public class GoodsServiceImpl implements GoodsService {
             params.setPage(1);
         }
 
-        List<Good> res = repository.display(flexibleQuery.toString(), params);
+        List<Good> res = repository.display(flexibleQuery.toString(), params)
+                .stream()
+                .peek(good -> good.setImage(good.getImage(), mediaService))
+                .collect(Collectors.toList());
 
         if (res.isEmpty()) {
             throw new NotFoundException("Sorry, but there are no products corresponding to your criteria.");
         }
-
-        for (Good good : res) {
-            // fixme
-            good.setImage(good.getImage(), mediaService);
-        }
-
         return new ModelView(params.getPage(), numOfPages, res);
-
     }
 
     @Override
@@ -204,5 +152,39 @@ public class GoodsServiceImpl implements GoodsService {
     public void updateQuantity(long id, double quantity) {
         // check
         repository.editQuantity(id, quantity, Double.compare(quantity, 0) != 0);
+    }
+
+    private String displayQueryConditions(RequestParams params) {
+        List<String> conditions = new LinkedList<>();
+        if (params.getName() != null) {
+            conditions.add("UPPER(product.name) LIKE UPPER(:name)");
+        }
+        if (params.getCategory() != null && !params.getCategory().equals("all")) {
+            conditions.add("category.name = :category");
+        }
+        if (params.getMinPrice() != null) {
+            conditions.add("price - price*discount/100 >= :minPrice");
+        }
+        if (params.getMaxPrice() != null) {
+            conditions.add("price - price*discount/100 <= :maxPrice");
+        }
+        conditions.add("status = true");
+        return String.join(" AND ", conditions);
+    }
+
+    private String getSortOrder(RequestParams params) {
+        String sortClause = "";
+        if (SortCategory.PRICE.equals(params.getSort())) {
+            sortClause = "ORDER BY goods.price";
+        } else if(SortCategory.DATE.equals(params.getSort())) {
+            sortClause = "ORDER BY shipping_date";
+        } else {
+            sortClause = "ORDER BY product.name";
+        }
+
+        if("DESC".equals(params.getDirection())) {
+            sortClause += " DESC";
+        }
+        return sortClause;
     }
 }
