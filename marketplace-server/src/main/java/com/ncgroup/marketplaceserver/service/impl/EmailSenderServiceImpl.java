@@ -2,6 +2,7 @@ package com.ncgroup.marketplaceserver.service.impl;
 
 import javax.mail.MessagingException;
 
+import com.ncgroup.marketplaceserver.model.dto.EmailParamsDto;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -36,69 +37,52 @@ public class EmailSenderServiceImpl implements EmailSenderService {
 
     @Override
     public String sendSimpleEmailValidate(String toEmail, String name) throws MessagingException {
-        javax.mail.internet.MimeMessage mimeMessage = mailSender.createMimeMessage();
-        MimeMessageHelper message = new MimeMessageHelper(mimeMessage);
-        EmailParam emailParam = new EmailParam();
-
-        message.setFrom(MailConstants.SENDER_EMAIL);
-        message.setTo(toEmail);
-        message.setSubject(MailConstants.ACTIVATE_ACCOUNT_SUBJECT);
-
-        emailParam.setMess(String.format(MailConstants.REGISTRATION_MESSAGE));
-        emailParam.setLink(String.format(confirmAccountUrl, emailParam.getToken()));
-        emailParam.setName(name);
-
-        Context context = new Context();
-        context.setVariable("EmailParam", emailParam);
-
-        String html = templateEngine.process("EmailValidation", context);
-        message.setText(html, true);
-        mailSender.send(mimeMessage);
-        return emailParam.getToken();
-
+        EmailParamsDto params = new EmailParamsDto(
+                MailConstants.ACTIVATE_ACCOUNT_SUBJECT,
+                MailConstants.REGISTRATION_MESSAGE,
+                toEmail,
+                name,
+                confirmAccountUrl
+        );
+        return sendEmail(params);
     }
 
     @Override
     public String sendSimpleEmailPasswordRecovery(String toEmail, String name) throws MessagingException {
-        javax.mail.internet.MimeMessage mimeMessage = mailSender.createMimeMessage();
-        MimeMessageHelper message = new MimeMessageHelper(mimeMessage);
-        EmailParam emailParam = new EmailParam();
-
-        message.setFrom(MailConstants.SENDER_EMAIL);
-        message.setTo(toEmail);
-        message.setSubject(MailConstants.PASSWORD_RECOVERY_SUBJECT);
-
-        emailParam.setMess(String.format(MailConstants.PASSWORD_RECOVERY_MESSAGE));
-        emailParam.setLink(String.format(resetPasswordUrl, emailParam.getToken()));
-        emailParam.setName(name);
-
-        Context context = new Context();
-        context.setVariable("EmailParam", emailParam);
-
-        String html = templateEngine.process("EmailValidation", context);
-        message.setText(html, true);
-        mailSender.send(mimeMessage);
-        return emailParam.getToken();
-
+        EmailParamsDto params = new EmailParamsDto(
+                MailConstants.PASSWORD_RECOVERY_SUBJECT,
+                MailConstants.PASSWORD_RECOVERY_MESSAGE,
+                toEmail,
+                name,
+                resetPasswordUrl
+        );
+        return sendEmail(params);
     }
 
     @Override
     public String sendSimpleEmailPasswordCreation(String toEmail, String name) throws MessagingException {
+        EmailParamsDto params = new EmailParamsDto(
+                MailConstants.PASSWORD_CREATION_SUBJECT,
+                MailConstants.PASSWORD_CREATION_MESSAGE,
+                toEmail,
+                name,
+                createPasswordUrl
+        );
+        return sendEmail(params);
+    }
+
+    private String sendEmail(EmailParamsDto params) throws MessagingException {
         javax.mail.internet.MimeMessage mimeMessage = mailSender.createMimeMessage();
         MimeMessageHelper message = new MimeMessageHelper(mimeMessage);
         EmailParam emailParam = new EmailParam();
 
-
         message.setFrom(MailConstants.SENDER_EMAIL);
-        message.setTo(toEmail);
-        //String generatedToken = generateToken();
+        message.setTo(params.getReceiver());
+        message.setSubject(params.getSubject());
 
-        // message.setText(String.format(MailConstants.PASSWORD_CREATION_MESSAGE + createPasswordUrl, generatedToken));
-        message.setSubject(MailConstants.PASSWORD_CREATION_SUBJECT);
-
-        emailParam.setMess(String.format(MailConstants.PASSWORD_CREATION_MESSAGE));
-        emailParam.setLink(String.format(createPasswordUrl, emailParam.getToken()));
-        emailParam.setName(name);
+        emailParam.setMess(String.format(params.getMessage()));
+        emailParam.setLink(String.format(params.getRedirectUrl(), emailParam.getToken()));
+        emailParam.setName(params.getName());
 
         Context context = new Context();
         context.setVariable("EmailParam", emailParam);
@@ -107,8 +91,6 @@ public class EmailSenderServiceImpl implements EmailSenderService {
         message.setText(html, true);
         mailSender.send(mimeMessage);
         return emailParam.getToken();
-
-
     }
 
 
