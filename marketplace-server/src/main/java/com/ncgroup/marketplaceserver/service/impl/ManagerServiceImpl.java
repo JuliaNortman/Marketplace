@@ -52,14 +52,7 @@ public class ManagerServiceImpl implements ManagerService {
     @Override
     public UserDto save(String name, String surname, String email, String phone, LocalDate birthday, String status) {
         userService.validateNewEmail(StringUtils.EMPTY, email);
-        boolean isEnabled;
-        if (status.equals(StatusConstants.TERMINATED)) {
-            isEnabled = false;
-        } else if (status.equals(StatusConstants.ACTIVE)) {
-            isEnabled = true;
-        } else {
-            throw new InvalidStatusException(ExceptionMessage.INVALID_MANAGER_STATUS);
-        }
+        boolean isEnabled = isEnabled(status);
         User user = User.builder()
                 .name(name)
                 .surname(surname)
@@ -81,6 +74,18 @@ public class ManagerServiceImpl implements ManagerService {
         user = userRepository.save(user);
         log.info("New manager registered");
         return UserDto.convertToDto(user);
+    }
+
+    private boolean isEnabled(String status) {
+        boolean isEnabled;
+        if (status.equals(StatusConstants.TERMINATED)) {
+            isEnabled = false;
+        } else if (status.equals(StatusConstants.ACTIVE)) {
+            isEnabled = true;
+        } else {
+            throw new InvalidStatusException(ExceptionMessage.INVALID_MANAGER_STATUS);
+        }
+        return isEnabled;
     }
 
     @Override

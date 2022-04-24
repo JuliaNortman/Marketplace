@@ -61,9 +61,9 @@ public class UserController {
     public ResponseEntity<UserDto> getUser(@RequestHeader(value = "Authorization", required = false) String token) {
         UserDto user = userService.findUserByToken(token);
         if (user == null) {
-            return new ResponseEntity<UserDto>(HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
-        return new ResponseEntity<UserDto>(user, OK);
+        return new ResponseEntity<>(user, OK);
     }
 
     @PostMapping(value = "/login", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
