@@ -68,8 +68,7 @@ public class UserServiceImpl implements UserService, UserDetailsService {
         }
 
         //validateLoginAttempt(user);
-        UserPrincipal userPrincipal = new UserPrincipal(user);
-        return userPrincipal;
+        return new UserPrincipal(user);
 
     }
 

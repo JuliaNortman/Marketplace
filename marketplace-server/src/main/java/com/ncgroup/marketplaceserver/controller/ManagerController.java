@@ -1,8 +1,10 @@
 package com.ncgroup.marketplaceserver.controller;
 
 import com.ncgroup.marketplaceserver.model.User;
+import com.ncgroup.marketplaceserver.model.dto.PaginationRequestDto;
 import com.ncgroup.marketplaceserver.model.dto.UserDto;
 import com.ncgroup.marketplaceserver.service.ManagerService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -14,6 +16,7 @@ import static org.springframework.http.HttpStatus.OK;
 
 @RequestMapping("/api/manager")
 @RestController
+@Slf4j
 public class ManagerController {
 
     private ManagerService managerService;
@@ -45,13 +48,8 @@ public class ManagerController {
     }
 
     @GetMapping()
-    public ResponseEntity<Map<String, Object>> findByNameSurname(
-            @RequestParam(value = "filter", required = false, defaultValue = "all") final String filter,
-            @RequestParam(value = "search", required = false, defaultValue = "") final String search,
-            @RequestParam(value = "page", required = false, defaultValue = "1") final int page
-    ) {
-
-        return new ResponseEntity<>(managerService.getByNameSurname(filter, search, page), OK);
+    public ResponseEntity<Map<String, Object>> findByNameSurname(PaginationRequestDto request) {
+        return new ResponseEntity<>(managerService.getByNameSurname(request), OK);
     }
 
 }

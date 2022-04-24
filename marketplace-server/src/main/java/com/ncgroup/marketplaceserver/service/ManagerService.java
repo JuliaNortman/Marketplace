@@ -1,6 +1,7 @@
 package com.ncgroup.marketplaceserver.service;
 
 import com.ncgroup.marketplaceserver.model.User;
+import com.ncgroup.marketplaceserver.model.dto.PaginationRequestDto;
 import com.ncgroup.marketplaceserver.model.dto.UserDto;
 
 import java.time.LocalDate;
@@ -13,5 +14,5 @@ public interface ManagerService {
 
     User updateManager(long id, User manger);
 
-    Map<String, Object> getByNameSurname(String filter, String search, int page);
+    Map<String, Object> getByNameSurname(PaginationRequestDto paginationRequest);
 }

@@ -8,6 +8,7 @@ import java.util.Map;
 
 import javax.mail.MessagingException;
 
+import com.ncgroup.marketplaceserver.model.dto.PaginationRequestDto;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -109,24 +110,24 @@ public class ManagerServiceImpl implements ManagerService {
     }
 
     @Override
-    public Map<String, Object> getByNameSurname(String filter, String search, int page) {
+    public Map<String, Object> getByNameSurname(PaginationRequestDto pagination) {
         List<User> managers = null;
         int allPages = 0;
 
-        if (StatusConstants.ACTIVE.equals(filter)) {
-            managers = managerRepository.getByNameSurname(search, true, (page - 1) * PAGE_SIZE);
-            allPages = managerRepository.getNumberOfRows(search, true);
-        } else if (StatusConstants.TERMINATED.equals(filter)) {
-            managers = managerRepository.getByNameSurname(search, false, (page - 1) * PAGE_SIZE);
-            allPages = managerRepository.getNumberOfRows(search, false);
+        if (StatusConstants.ACTIVE.equals(pagination.getFilter())) {
+            managers = managerRepository.getByNameSurname(pagination.getSearch(), true, (pagination.getPage() - 1) * PAGE_SIZE);
+            allPages = managerRepository.getNumberOfRows(pagination.getSearch(), true);
+        } else if (StatusConstants.TERMINATED.equals(pagination.getFilter())) {
+            managers = managerRepository.getByNameSurname(pagination.getSearch(), false, (pagination.getPage() - 1) * PAGE_SIZE);
+            allPages = managerRepository.getNumberOfRows(pagination.getSearch(), false);
         } else {
-            managers = managerRepository.getByNameSurnameAll(search, (page - 1) * PAGE_SIZE);
-            allPages = managerRepository.getNumberOfRowsAll(search);
+            managers = managerRepository.getByNameSurnameAll(pagination.getSearch(), (pagination.getPage() - 1) * PAGE_SIZE);
+            allPages = managerRepository.getNumberOfRowsAll(pagination.getSearch());
         }
 
         Map<String, Object> result = new HashMap<>();
         result.put("users", managers);
-        result.put("currentPage", page);
+        result.put("currentPage", pagination.getPage());
         result.put("pageNum", allPages % PAGE_SIZE == 0 ? allPages / PAGE_SIZE : allPages / PAGE_SIZE + 1);
 
         return result;

@@ -80,7 +80,7 @@ public class EmailSenderServiceImpl implements EmailSenderService {
         message.setTo(params.getReceiver());
         message.setSubject(params.getSubject());
 
-        emailParam.setMess(String.format(params.getMessage()));
+        emailParam.setMess(params.getMessage());
         emailParam.setLink(String.format(params.getRedirectUrl(), emailParam.getToken()));
         emailParam.setName(params.getName());
 

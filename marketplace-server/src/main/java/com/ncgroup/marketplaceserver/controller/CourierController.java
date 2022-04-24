@@ -6,6 +6,7 @@ import java.util.Map;
 
 import javax.validation.Valid;
 
+import com.ncgroup.marketplaceserver.model.dto.PaginationRequestDto;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -59,13 +60,9 @@ public class CourierController {
     }
 
     @GetMapping()
-    public ResponseEntity<Map<String, Object>> findByNameSurname(
-            @RequestParam(value = "filter", required = false, defaultValue = "all") final String filter,
-            @RequestParam(value = "search", required = false, defaultValue = "") final String search,
-            @RequestParam(value = "page", required = false, defaultValue = "1") final int page
-    ) {
+    public ResponseEntity<Map<String, Object>> findByNameSurname(PaginationRequestDto request) {
 
-        return new ResponseEntity<>(courierService.getByNameSurname(filter, search, page), OK);
+        return new ResponseEntity<>(courierService.getByNameSurname(request), OK);
     }
 
 

@@ -9,6 +9,7 @@ import java.util.Map;
 
 import javax.mail.MessagingException;
 
+import com.ncgroup.marketplaceserver.model.dto.PaginationRequestDto;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -152,31 +153,31 @@ public class CourierServiceImpl implements CourierService {
     }
 
     @Override
-    public Map<String, Object> getByNameSurname(String filter, String search, int page) {
+    public Map<String, Object> getByNameSurname(PaginationRequestDto request) {
         List<Courier> courierList = null;
         int allPages = 0;
 
-        if (StatusConstants.ACTIVE.equals(filter)) {
+        if (StatusConstants.ACTIVE.equals(request.getFilter())) {
             courierList = courierRepository
-                    .getByNameSurname(search, true, true, (page - 1) * PAGE_SIZE);
-            allPages = courierRepository.getNumberOfRows(search, true, true);
-        } else if (StatusConstants.INACTIVE.equals(filter)) {
+                    .getByNameSurname(request.getSearch(), true, true, (request.getPage() - 1) * PAGE_SIZE);
+            allPages = courierRepository.getNumberOfRows(request.getSearch(), true, true);
+        } else if (StatusConstants.INACTIVE.equals(request.getFilter())) {
             courierList = courierRepository
-                    .getByNameSurname(search, true, false, (page - 1) * PAGE_SIZE);
-            allPages = courierRepository.getNumberOfRows(search, true, false);
-        } else if (StatusConstants.TERMINATED.equals(filter)) {
+                    .getByNameSurname(request.getSearch(), true, false, (request.getPage() - 1) * PAGE_SIZE);
+            allPages = courierRepository.getNumberOfRows(request.getSearch(), true, false);
+        } else if (StatusConstants.TERMINATED.equals(request.getFilter())) {
             courierList = courierRepository
-                    .getByNameSurname(search, false, false, (page - 1) * PAGE_SIZE);
-            allPages = courierRepository.getNumberOfRows(search, false, false);
+                    .getByNameSurname(request.getSearch(), false, false, (request.getPage() - 1) * PAGE_SIZE);
+            allPages = courierRepository.getNumberOfRows(request.getSearch(), false, false);
         } else {
-            courierList = courierRepository.getByNameSurnameAll(search, (page - 1) * PAGE_SIZE);
-            allPages = courierRepository.getNumberOfRowsAll(search);
+            courierList = courierRepository.getByNameSurnameAll(request.getSearch(), (request.getPage() - 1) * PAGE_SIZE);
+            allPages = courierRepository.getNumberOfRowsAll(request.getSearch());
         }
         List<User> couriers = calculateStatusForCollection(courierList);
 
         Map<String, Object> result = new HashMap<>();
         result.put("users", couriers);
-        result.put("currentPage", page);
+        result.put("currentPage", request.getPage());
         result.put("pageNum",
                 allPages % PAGE_SIZE == 0 ? allPages / PAGE_SIZE : allPages / PAGE_SIZE + 1);
         return result;

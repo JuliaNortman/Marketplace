@@ -5,6 +5,7 @@ import java.util.Map;
 
 import com.ncgroup.marketplaceserver.model.User;
 import com.ncgroup.marketplaceserver.model.dto.CourierUpdateDto;
+import com.ncgroup.marketplaceserver.model.dto.PaginationRequestDto;
 import com.ncgroup.marketplaceserver.model.dto.UserDto;
 
 public interface CourierService {
@@ -14,5 +15,5 @@ public interface CourierService {
 
     CourierUpdateDto updateCourier(long id, CourierUpdateDto courier);
 
-    Map<String, Object> getByNameSurname(String filter, String search, int page);
+    Map<String, Object> getByNameSurname(PaginationRequestDto request);
 }
