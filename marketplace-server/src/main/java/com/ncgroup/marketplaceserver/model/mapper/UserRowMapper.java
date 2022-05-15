@@ -29,12 +29,14 @@ public class UserRowMapper implements RowMapper<User> {
                 .password(rs.getString("password"))
                 .role(Role.valueOf(rs.getString("role")))
                 .authLink(rs.getString("auth_link"))
+                .status(rs.getString("status"))
                 .build();
-        if (rs.getBoolean("is_enabled")) {
+        /*if (rs.getBoolean("is_enabled")) {
             user.setStatus("active");
         } else {
             user.setStatus("terminated");
-        }
+        }*/
+
         if (rs.getObject("last_failed_auth", OffsetDateTime.class) != null) {
             user.setLastFailedAuth(rs.getObject("last_failed_auth", OffsetDateTime.class)
                     .withOffsetSameInstant(OffsetDateTime.now().getOffset()));

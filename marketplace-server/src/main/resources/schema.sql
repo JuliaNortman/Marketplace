@@ -18,11 +18,7 @@ EXTENSION IF EXISTS pg_trgm;
 
 CREATE TABLE IF NOT EXISTS role
 (
-    id
-    SERIAL
-    NOT
-    NULL
-    CONSTRAINT
+    id SERIAL NOT NULL CONSTRAINT
     pk_role_id
     PRIMARY
     KEY,
@@ -36,36 +32,17 @@ CREATE TABLE IF NOT EXISTS role
 
 CREATE TABLE IF NOT EXISTS credentials
 (
-    id
-    SERIAL
-    NOT
-    NULL
-    CONSTRAINT
-    pk_credentials_id
-    PRIMARY
-    KEY,
-    role_id
-    INTEGER
-    CONSTRAINT
-    fk_credentials_role
-    REFERENCES
-    role,
-    email
-    VARCHAR
-(
-    50
-) NOT NULL,
-    password VARCHAR
-(
-    100
-),
+    id SERIAL NOT NULL CONSTRAINT pk_credentials_id PRIMARY KEY,
+    role_id INTEGER CONSTRAINT fk_credentials_role REFERENCES role,
+    email VARCHAR (50) NOT NULL,
+    password VARCHAR (100),
     is_enabled BOOLEAN,
     failed_auth INTEGER DEFAULT 0,
     last_failed_auth TIMESTAMP WITH TIME ZONE,
-                                   auth_link VARCHAR (100),
-    auth_link_date TIMESTAMP
-                               WITH TIME ZONE
-                                   );
+    auth_link VARCHAR (100),
+    auth_link_date TIMESTAMP WITH TIME ZONE,
+    status VARCHAR(20)
+);
 
 
 CREATE TABLE IF NOT EXISTS person

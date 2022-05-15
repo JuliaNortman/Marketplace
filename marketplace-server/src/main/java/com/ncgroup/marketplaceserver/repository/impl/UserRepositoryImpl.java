@@ -110,7 +110,8 @@ public class UserRepositoryImpl implements UserRepository {
                 .addValue("is_enabled", user.isEnabled())
                 .addValue("failed_auth", credentialsHolder)
                 .addValue("last_failed_auth", user.getLastFailedAuth())
-                .addValue("auth_link", user.getAuthLink());
+                .addValue("auth_link", user.getAuthLink())
+                .addValue("status", user.getStatus());
         namedParameterJdbcTemplate.update(insertCredentialsQuery, credentialsParameters, credentialsHolder);
 
         KeyHolder userHolder = new GeneratedKeyHolder();
